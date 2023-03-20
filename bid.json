@@ -1,0 +1,138 @@
+{
+    "bid": {
+        "version": 1,
+        "operations": {
+            "register": "SIG_VERIFY self.signature FOR self.public_key",
+            "modify": "SIG_VERIFY self.ancestor.signature FOR self.public_key",
+            "renew": [
+                "SIG_VERIFY self.ancestor.signature",
+                "FOR self.public_key",
+                "WITHIN_BEFORE_AFTER 2016 2016 self.expiration.period.active"
+            ]
+        },
+        "dependencies": [
+            "auc"
+        ],
+        "expiration": {
+            "period": {
+                "initial": 17500,
+                "switch": 840000,
+                "final": 52500
+            },
+            "grace": 2016,
+            "delete": "DROP"
+        },
+        "create_key": {
+            "index": 0,
+            "type": "ed25519"
+        },
+        "minimum_fee_in_sats": 100000,
+        "sat_tracking": false,
+        "property_rules": {
+            "name": {
+                "type": "STRING",
+                "min_length": 7,
+                "max_length": 16,
+                "valid_chars": "a-z 0-9 - _",
+                "validation_script": [
+                    "RESERVE 10k-reserved-domains.csv",
+                    "WITH_VARIATION . NONE",
+                    "WITH_VARIATION . _",
+                    [
+                        "INITIAL_LINK_SIG_VERIFY self.claim.domain",
+                        "FOR self.public_key",
+                        "LINK_SIG_VERIFY self.claim.proof",
+                        "FOR self.public_key",
+                        "WHERE self.name",
+                        [
+                            "MATCHES_ANY",
+                            "self.claim.domain SPLIT . 0",
+                            "self.claim.domain REPLACE . NONE",
+                            "self.claim.domain REPLACE . _"
+                        ],
+                        "BY 840000"
+                    ],
+                    "MUST_BE_VALID self",
+                    "MUST_BE_UNIQUE"
+                ],
+                "immutable": true,
+                "required": true
+            },
+            "ancestor": {
+                "type": "INSCRIPTION",
+                "immutable": true,
+                "validation_script": "MUST_BE_VALID itself"
+            },
+            "claim": {
+                "domain": {
+                    "type": "STRING",
+                    "min_length": 4,
+                    "max_length": 256,
+                    "must_include": ".",
+                    "immutable": true
+                },
+                "proof": {
+                    "type": "STRING",
+                    "min_length": 4,
+                    "max_length": 256,
+                    "must_include": ".",
+                    "validation_script": [
+                        "WHERE self.claim.proof",
+                        "MATCHES https://web.archive.org/web/*"
+                    ],
+                    "immutable": true
+                }
+            },
+            "display_name": {
+                "type": "STRING",
+                "min_length": 7,
+                "max_length": 32,
+                "valid_chars": "a-z 0-9 - _"
+            },
+            "email": {
+                "type": "[STRING]",
+                "min_length": 6,
+                "max_length": 256,
+                "must_include": "@ .",
+                "max_elements": 8
+            },
+            "domain": {
+                "type": "STRING",
+                "min_length": 4,
+                "max_length": 256,
+                "must_include": ".",
+                "max_elements": 8,
+                "validation_script": [
+                    "LINK_SIG_VERIFY self.domain",
+                    "FOR self.public_key",
+                    "WHERE self.domain MATCHES https://*"
+                ]
+            },
+            "public_key": {
+                "type": "STRING",
+                "min_length": 32,
+                "max_length": 32,
+                "valid_chars": "Base64",
+                "required": true
+            },
+            "signature": {
+                "type": "STRING",
+                "min_length": 8,
+                "max_length": 256,
+                "valid_chars": "Base64",
+                "required": true
+            },
+            "twitter": {
+                "type": "STRING",
+                "min_length": 8,
+                "max_length": 256,
+                "validation_script": [
+                    "LINK_SIG_VERIFY self.twitter",
+                    "FOR self.public_key",
+                    "WHERE self.twitter",
+                    "MATCHES https://twitter.com/*"
+                ]
+            }
+        }
+    }
+}
